@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Gestión Pro - Hugo Dev</title>
+    <style>
+        :root { --primary: #2563eb; --dark: #1e293b; --light: #f8fafc; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--light); margin: 0; padding: 20px; }
+        .container { max-width: 800px; margin: auto; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        h2 { color: var(--dark); border-bottom: 2px solid var(--primary); padding-bottom: 10px; }
+        .form-group { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+        input { padding: 10px; border: 1px solid #ddd; border-radius: 6px; flex: 1; min-width: 150px; }
+        button { padding: 10px 20px; background: var(--primary); color: white; border: none; border-radius: 6px; cursor: pointer; transition: 0.3s; }
+        button:hover { background: #1d4ed8; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th { background: var(--dark); color: white; padding: 12px; text-align: left; }
+        td { padding: 12px; border-bottom: 1px solid #eee; }
+        .btn-delete { background: #ef4444; padding: 5px 10px; font-size: 12px; }
+        .total-card { margin-top: 20px; padding: 15px; background: #e0f2fe; border-radius: 8px; font-weight: bold; font-size: 1.2rem; color: var(--primary); }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>📦 Panel de Inventario / Ventas</h2>
+    
+    <div class="form-group">
+        <input type="text" id="producto" placeholder="Nombre del producto">
+        <input type="number" id="precio" placeholder="Precio $">
+        <input type="number" id="cantidad" placeholder="Cantidad">
+        <button onclick="agregarItem()">Agregar al Stock</button>
+    </div>
+
+    <input type="text" id="buscador" placeholder="🔍 Buscar producto..." onkeyup="filtrar()">
+
+    <table id="tablaItems">
+        <thead>
+            <tr>
+                <th>Producto</th>
+                <th>Precio</th>
+                <th>Stock</th>
+                <th>Acción</th>
+            </tr>
+        </thead>
+        <tbody id="listaCuerpo"></tbody>
+    </table>
+
+    <div class="total-card" id="totalValor">
+        Valor Total del Inventario: $0
+    </div>
+</div>
+
+<script>
+    let inventario = JSON.parse(localStorage.getItem('miInventario')) || [];
+
+    function agregarItem() {
+        const nombre = document.getElementById('producto').value;
+        const precio = parseFloat(document.getElementById('precio').value);
+        const cantidad = parseInt(document.getElementById('cantidad').value);
+
+        if(nombre && precio && cantidad) {
+            inventario.push({ id: Date.now(), nombre, precio, cantidad });
+            actualizarInterfaz();
+            limpiarFormulario();
+        } else { alert("Por favor, completa todos los campos"); }
+    }
+
+    function actualizarInterfaz() {
+        localStorage.setItem('miInventario', JSON.stringify(inventario));
+        const cuerpo = document.getElementById('listaCuerpo');
+        cuerpo.innerHTML = '';
+        let total = 0;
+
+        inventario.forEach(item => {
+            total += (item.precio * item.cantidad);
+            cuerpo.innerHTML += `
+                <tr>
+                    <td>${item.nombre}</td>
+                    <td>$${item.precio.toLocaleString()}</td>
+                    <td>${item.cantidad} unidades</td>
+                    <td><button class="btn-delete" onclick="eliminar(${item.id})">Borrar</button></td>
+                </tr>
+            `;
+        });
+        document.getElementById('totalValor').innerText = `Valor Total del Inventario: $${total.toLocaleString()}`;
+    }
+
+    function eliminar(id) {
+        inventario = inventario.filter(item => item.id !== id);
+        actualizarInterfaz();
+    }
+
+    function filtrar() {
+        const busqueda = document.getElementById('buscador').value.toLowerCase();
+        const filas = document.querySelectorAll('#listaCuerpo tr');
+        filas.forEach(fila => {
+            const texto = fila.cells[0].innerText.toLowerCase();
+            fila.style.display = texto.includes(busqueda) ? '' : 'none';
+        });
+    }
+
+    function limpiarFormulario() {
+        document.getElementById('producto').value = '';
+        document.getElementById('precio').value = '';
+        document.getElementById('cantidad').value = '';
+    }
+
+    // Cargar datos al iniciar
+    actualizarInterfaz();
+</script>
+
+</body>
+</html>
